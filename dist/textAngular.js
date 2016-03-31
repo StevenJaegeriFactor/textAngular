@@ -1054,7 +1054,6 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 			return;
 		},
 		modalactivate: function(){
-			console.log('modal open');
 			$rootScope.$broadcast('modal-opened');
 		},
 		inputvalue: function(value){
@@ -1063,7 +1062,6 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 		},
 		modalsetgetrangeat: function(value){
 			this.modalgetrangeat = value;
-			console.log(this.modalgetrangeat);
 			return;
 		}
 	}
@@ -1199,7 +1197,6 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 			var _ensureContentWrapped = function(value) {
 				if (_blankTest(value)) return value;
 				var domTest = angular.element("<div>" + value + "</div>");
-				//console.log('domTest.children().length():', domTest.children().length);
 				if (domTest.children().length === 0) {
 					value = "<" + attrs.taDefaultWrap + ">" + value + "</" + attrs.taDefaultWrap + ">";
 				} else {
@@ -1217,7 +1214,6 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 						for(i = 0; i < _children.length; i++){
 							var node = _children[i];
 							var nodeName = node.nodeName.toLowerCase();
-							//console.log(nodeName);
 							if(nodeName === '#comment') {
 								value += '<!--' + node.nodeValue + '-->';
 							} else if(nodeName === '#text') {
@@ -1244,7 +1240,6 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 						}
 					}
 				}
-				//console.log(value);
 				return value;
 			};
 
