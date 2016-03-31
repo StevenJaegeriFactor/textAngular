@@ -432,7 +432,7 @@ angular.module('textAngular.factories', [])
 	};
 }]);
 angular.module('textAngular.DOM', ['textAngular.factories'])
-.factory('taExecCommand', ['taSelection', 'taBrowserTag', '$document', function(taSelection, taBrowserTag, $document){
+.factory('taExecCommand', ['taSelection', 'taBrowserTag', '$document','textangularmodalfactory', function(taSelection, taBrowserTag, $document, textangularmodalfactory){
 	var listToDefault = function(listElement, defaultWrap){
 		var $target, i;
 		// if all selected then we should remove the list
@@ -639,17 +639,16 @@ angular.module('textAngular.DOM', ['textAngular.factories'])
 					taSelection.setSelectionToElementEnd($target[0]);
 					return;
 				}else if(command.toLowerCase() === 'createlink'){
-					var tagBegin = '<a href="' + options + '" target="' +
-							(defaultTagAttributes.a.target ? defaultTagAttributes.a.target : '') +
-							'">',
+					var tagBegin = '<a href="' + options + '" target="'+ textangularmodalfactory.modalvalues.checkbox +'">',
 						tagEnd = '</a>',
-						_selection = taSelection.getSelection();
+						_selection = textangularmodalfactory.modallocation;
 					if(_selection.collapsed){
 						// insert text at selection, then select then just let normal exec-command run
 						taSelection.insertHtml(tagBegin + options + tagEnd, topNode);
 					}else if(rangy.getSelection().getRangeAt(0).canSurroundContents()){
 						var node = angular.element(tagBegin + tagEnd)[0];
-						rangy.getSelection().getRangeAt(0).surroundContents(node);
+						textangularmodalfactory.modalgetrangeat.surroundContents(node);
+						textangularmodalfactory.modalsetgetrangeat({});
 					}
 					return;
 				}else if(command.toLowerCase() === 'inserthtml'){
@@ -1013,6 +1012,61 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 			});
 		}
 	};
+}])
+.directive('textangularmodal', ['textangularmodalfactory', '$rootScope', function(textangularmodalfactory, $rootScope){
+	return {
+		restrict: 'E',
+		link: function(scope, elem, attrs, ctrl){
+			scope.modalshow = 0;
+			scope.values = {};
+			scope.values.text = '';
+			scope.values.checkbox = 0;
+			$rootScope.$on('modal-opened', function(){
+				scope.modalshow = 1;
+			});
+			scope.canceling=function(){
+				scope.values.text = '';
+				scope.values.checkbox = 0;
+				scope.modalshow = 0;
+			};
+			scope.saving = function(){
+				if (scope.values.checkbox == 1) {
+                    scope.values.checkbox = "_blank";
+                }else{
+					scope.values.checkbox = "";
+				}
+				textangularmodalfactory.inputvalue(scope.values);
+				scope.values.text = '';
+				scope.values.checkbox = 0;
+				scope.modalshow = 0;
+			};
+		},
+		template:'<div ng-show="modalshow" class="wysiwygmodal"><h2>Create Link</h2><span><label>To what URL should this link go?</label><input ng-model="values.text" type="text"/></span><span><input type="checkbox" ng-model="values.checkbox" value="1"/>Open in new window</span><span class="buttoncase"><span class="modalbutton" ng-click="canceling()">Cancel</span><span class="modalbutton save" ng-click="saving()">Save</span></span></div>'
+	};
+}])
+.factory('textangularmodalfactory',['$rootScope', function($rootScope){
+	return {
+		modalvalues: {},
+		modallocation:'',
+		modalgetrangeat:{},
+		modalsetlocation:function(value){
+			this.modallocation = value;
+			return;
+		},
+		modalactivate: function(){
+			console.log('modal open');
+			$rootScope.$broadcast('modal-opened');
+		},
+		inputvalue: function(value){
+			this.modalvalues = value;
+			$rootScope.$broadcast('modal-updated');
+		},
+		modalsetgetrangeat: function(value){
+			this.modalgetrangeat = value;
+			console.log(this.modalgetrangeat);
+			return;
+		}
+	}
 }])
 .directive('taBind', [
 		'taSanitize', '$timeout', '$window', '$document', 'taFixChrome', 'taBrowserTag',
@@ -1466,12 +1520,10 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 					var _processingPaste = false;
 					/* istanbul ignore next: phantom js cannot test this for some reason */
 					var processpaste = function(text) {
-                        var _isOneNote = text.match(/content=["']*OneNote.File/i);
 						/* istanbul ignore else: don't care if nothing pasted */
-                        //console.log(text);
 						if(text && text.trim().length){
 							// test paste from word/microsoft product
-							if(text.match(/class=["']*Mso(Normal|List)/i) || text.match(/content=["']*Word.Document/i) || text.match(/content=["']*OneNote.File/i)){
+							if(text.match(/class=["']*Mso(Normal|List)/i) || text.match(/content=["']*Word.Document/i)){
 								var textFragment = text.match(/<!--StartFragment-->([\s\S]*?)<!--EndFragment-->/i);
 								if(!textFragment) textFragment = text;
 								else textFragment = textFragment[1];
@@ -1569,11 +1621,7 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 									if(node.attributes.length <= 0) _unwrapElement(node);
 								});
 								angular.forEach(targetDom.find('font'), _unwrapElement);
-
-                                text = targetDom.html();
-                                if(_isOneNote){
-                                    text = targetDom.html() || dom.html();
-                                }
+								text = targetDom.html();
 							}else{
 								// remove unnecessary chrome insert
 								text = text.replace(/<(|\/)meta[^>]*?>/ig, '');
@@ -2160,6 +2208,7 @@ textAngular.directive("textAngular", [
 					popover: angular.element('<div class="popover fade bottom" style="max-width: none; width: 305px;"></div>'),
 					popoverArrow: angular.element('<div class="arrow"></div>'),
 					popoverContainer: angular.element('<div class="popover-content"></div>'),
+					linkContainer: angular.element('<div class="link-content"></div>'),
 					resize: {
 						overlay: angular.element('<div class="ta-resizer-handle-overlay"></div>'),
 						background: angular.element('<div class="ta-resizer-handle-background"></div>'),

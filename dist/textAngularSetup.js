@@ -436,7 +436,7 @@ angular.module('textAngularSetup', [])
 		}
 	};
 }])
-.run(['taRegisterTool', '$window', 'taTranslations', 'taSelection', 'taToolFunctions', '$sanitize', 'taOptions', function(taRegisterTool, $window, taTranslations, taSelection, taToolFunctions, $sanitize, taOptions){
+.run(['textangularmodalfactory', 'taRegisterTool', '$window', 'taTranslations', 'taSelection', 'taToolFunctions', '$sanitize', 'taOptions', '$rootScope', '$q', function(textangularmodalfactory, taRegisterTool, $window, taTranslations, taSelection, taToolFunctions, $sanitize, taOptions, $rootScope, $q){
 	// test for the version of $sanitize that is in use
 	// You can disable this check by setting taOptions.textAngularSanitize == false
 	var gv = {}; $sanitize('', gv);
@@ -772,11 +772,19 @@ angular.module('textAngularSetup', [])
 		tooltiptext: taTranslations.insertLink.tooltip,
 		iconclass: 'fa fa-link',
 		action: function(){
-			var urlLink;
-			urlLink = $window.prompt(taTranslations.insertLink.dialogPrompt, 'http://');
-			if(urlLink && urlLink !== '' && urlLink !== 'http://'){
-				return this.$editor().wrapSelection('createLink', urlLink, true);
-			}
+			var thisref = this;
+			var selectedElement = taSelection.getSelection();
+			var getrangeat = rangy.getSelection().getRangeAt(0);
+			textangularmodalfactory.modalactivate();
+			$rootScope.$on('modal-updated', function(){
+				if(textangularmodalfactory.modalvalues && textangularmodalfactory.modalvalues !== '' && textangularmodalfactory.modalvalues !== 'http://'){
+					textangularmodalfactory.modalsetlocation(selectedElement);
+					textangularmodalfactory.modalsetgetrangeat(getrangeat);
+					getrangeat = {};
+					thisref.$editor().wrapSelection('createLink', textangularmodalfactory.modalvalues.text, true);
+					
+				}
+			});
 		},
 		activeState: function(commonElement){
 			if(commonElement) return commonElement[0].tagName === 'A';
