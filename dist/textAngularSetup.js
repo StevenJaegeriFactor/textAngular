@@ -775,11 +775,15 @@ angular.module('textAngularSetup', [])
 			var thisref = this;
 			var selectedElement = taSelection.getSelection();
 			var getrangeat = rangy.getSelection().getRangeAt(0);
+			if (getrangeat.commonAncestorContainer.tagName == 'BODY') {
+                return;
+            }
 			textangularmodalfactory.modalactivate();
 			$rootScope.$on('modal-updated', function(){
 				if(textangularmodalfactory.modalvalues && textangularmodalfactory.modalvalues !== '' && textangularmodalfactory.modalvalues !== 'http://'){
 					textangularmodalfactory.modalsetlocation(selectedElement);
 					textangularmodalfactory.modalsetgetrangeat(getrangeat);
+					selectedElement = {};
 					getrangeat = {};
 					thisref.$editor().wrapSelection('createLink', textangularmodalfactory.modalvalues.text, true);
 					
